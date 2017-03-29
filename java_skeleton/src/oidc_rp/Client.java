@@ -89,20 +89,21 @@ public class Client {
 		Nonce nonce = new Nonce(); /* Generate random string securely */
 
 		AuthenticationRequest authReq = new AuthenticationRequest.Builder(
-				new ResponseType(""), /* Response type, defines which flow to use */
-				null, /* Requested scopes, defines which user claims you want to receive */
-				null, /* Client ID, defines which client ELIXIR AAI will use */
-				null  /* Redirect URI, defines callback where ELIXIR AAI will send the user after authentication */
+				new ResponseType("code"), /* Response type, defines which flow to use */
+				requestedScopes, /* Requested scopes, defines which user claims you want to receive */
+				clientID, /* Client ID, defines which client ELIXIR AAI will use */
+				clientRedirectionURI  /* Redirect URI, defines callback where ELIXIR AAI will send the user after authentication */
 		)
-				.endpointURI(null) /* Authorization endpoint, where user will be redirected to authenticate */
-				.state(null) /* State, has to match before and after user authenticates on ELIXIR AAI */
-				.nonce(null) /* Nonce, has to match before and user authenticates with value in received ID Token */
+				.endpointURI(providerMetadata.getAuthorizationEndpointURI()) /* Authorization endpoint, where user will be redirected to authenticate */
+				.state(state) /* State, has to match before and after user authenticates on ELIXIR AAI */
+				.nonce(nonce) /* Nonce, has to match before and user authenticates with value in received ID Token */
 				.build();
 
 		// TODO save state and nonce for security reasons. (Replay/CSRF attacks)
 
 		/* store object to session, can be obtained by req.session().attribute("attribute name") */
-		session.attribute("attribute name", "Attribute value");
+		session.attribute("state", state);
+		session.attribute("nonce", nonce);
 
 		res.redirect(authReq.toURI().toString());
 		return null;

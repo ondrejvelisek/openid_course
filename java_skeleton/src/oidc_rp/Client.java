@@ -158,8 +158,8 @@ public class Client {
 			// TODO make userinfo request
 
 			UserInfoRequest userInfoReq = new UserInfoRequest(
-					null, /* ELIXIR AAI User info endpoint URL, where your client can obtain current user claims */
-					null /* Access token, used by ELIXIR AAI to authorize client */
+					providerMetadata.getUserInfoEndpointURI(), /* ELIXIR AAI User info endpoint URL, where your client can obtain current user claims */
+					accessToken /* Access token, used by ELIXIR AAI to authorize client */
 			);
 			UserInfoSuccessResponse userInfoRes = UserInfoSuccessResponse.parse(userInfoReq.toHTTPRequest().send());
 

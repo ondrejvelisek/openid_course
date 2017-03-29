@@ -119,7 +119,7 @@ public class Client {
 			// TODO parse authentication response from url
 
 			AuthenticationSuccessResponse authRes;
-			authRes = (AuthenticationSuccessResponse) AuthenticationResponseParser.parse(new URI("Authentication response"));
+			authRes = (AuthenticationSuccessResponse) AuthenticationResponseParser.parse(new URI(url));
 
 			AuthorizationCode authCode = authRes.getAuthorizationCode();
 
@@ -128,7 +128,7 @@ public class Client {
 			Use  authRes.getState()  and  req.session().attribute("Attribute name")
 			Do not forget to use  Object::equals(Object object)  to properly check equality in Java
 			*/
-			if (true) {
+			if (!authRes.getState().equals(req.session().attribute("state"))) {
 				throw new SecurityException("State does not equal. Possible attack.");
 			}
 

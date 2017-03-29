@@ -58,22 +58,22 @@ public class Client {
 
 		// TODO set client registered information
 
-		clientID = new ClientID("Your client ID");
-		clientSecret = new Secret("Your client Secret");
-		clientRedirectionURI = new URI("Your client redirect URI");
+		clientID = new ClientID("client");
+		clientSecret = new Secret("secret");
+		clientRedirectionURI = new URI("http://sp.example.org:8090/callback");
 
-		requestedScopes = new Scope("List", "of", "scopes");
+		requestedScopes = new Scope("openid", "profile", "email");
 
 		// TODO set provider configuration
 
 		providerMetadata = new OIDCProviderMetadata(
-				new Issuer("ELIXIR OIDC Issuer"),
+				new Issuer("https://perun.elixir-czech.cz/oidc/"),
 				Arrays.asList(SubjectType.PUBLIC),
-				new URI("ELIXIR OIDC jwk URI")
+				new URI("https://perun.elixir-czech.cz/oidc/jwk")
 		);
-		providerMetadata.setAuthorizationEndpointURI(new URI("ELIXIR OIDC Authorization endpoint URI"));
-		providerMetadata.setTokenEndpointURI(new URI("ELIXIR OIDC Token endpoint URI"));
-		providerMetadata.setUserInfoEndpointURI(new URI("ELIXIR OIDC User info endpoint URI"));
+		providerMetadata.setAuthorizationEndpointURI(new URI("https://perun.elixir-czech.cz/oidc/authorize"));
+		providerMetadata.setTokenEndpointURI(new URI("https://perun.elixir-czech.cz/oidc/token"));
+		providerMetadata.setUserInfoEndpointURI(new URI("https://perun.elixir-czech.cz/oauth/rpc/json/oidcManager/userinfo"));
 
 
 	}

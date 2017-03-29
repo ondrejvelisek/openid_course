@@ -2,22 +2,21 @@ package oidc_rp;
 
 import static spark.Spark.exception;
 import static spark.Spark.get;
-import static spark.Spark.post;
-import static spark.SparkBase.port;
+import static spark.Spark.port;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.text.MessageFormat;
 
-import utils.FileHandling;
-
-import com.nimbusds.jwt.ReadOnlyJWTClaimsSet;
+import com.nimbusds.jwt.JWT;
 import com.nimbusds.oauth2.sdk.AuthorizationCode;
 import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.oauth2.sdk.SerializeException;
-import com.nimbusds.oauth2.sdk.http.CommonContentTypes;
 import com.nimbusds.oauth2.sdk.token.AccessToken;
-import com.nimbusds.openid.connect.sdk.UserInfoSuccessResponse;
+import com.nimbusds.openid.connect.sdk.claims.UserInfo;
 
 /**
  * Skeleton code for building an OpenID Connect Public Client.
@@ -27,9 +26,11 @@ import com.nimbusds.openid.connect.sdk.UserInfoSuccessResponse;
  * Connect support.
  *
  * @author Rebecka Gulliksson, rebecka.gulliksson@umu.se
+ * @author Ondrej Velisek, ondrejvelisek@gmail.com
  *
  */
 public class WebServer {
+
 	/**
 	 * Which port (on localhost) the RP listens to for the redirect URI.
 	 */
@@ -37,40 +38,20 @@ public class WebServer {
 
 	public static void main(String[] args) throws ParseException, IOException,
 			URISyntaxException, SerializeException {
-		String jsonMetadata = FileHandling.readFromFile("client.json");
-		Client client = new Client(jsonMetadata);
+		Client client = new Client();
 
-		/*** Spark webserver setup ***/
+		/*** webserver setup ***/
 		port(SERVER_PORT);
 
-		/*** Spark webserver routes ***/
+		/*** webserver routes ***/
+		get("/", (req, res) -> readFromFile("index.html"));
 
-		/* displays the main page */
-		get("/", (req, res) -> FileHandling.readFromFile("index.html"));
-
-		/*
-		 * where the authentication response from the provider is received when
-		 * using implicit or hybrid flow
-		 */
-		get("/implicit_flow_callback",
-				(req, res) -> FileHandling.readFromFile("repost_fragment.html"));
-
-		/*
-		 * starts authentication using the OpenID Connect code flow
-		 */
 		get("/authenticate", client::authenticate);
 
 		/*
-		 * where the authentication response from the provider is received when
-		 * using code flow
+		 * where the authentication response from the provider is received
 		 */
-		get("/code_flow_callback", client::codeFlowCallback);
-
-		/*
-		 * where the fragment identifier is received after being parsed by the
-		 * client (using Javascript)
-		 */
-		post("/repost_fragment", client::implicitFlowCallback);
+		get("/callback", client::callback);
 
 		/* default handling if a requested file can not be found */
 		exception(IOException.class, (e, request, response) -> {
@@ -84,39 +65,42 @@ public class WebServer {
 	 *
 	 * @param authCode
 	 *            authorization code obtained from authentication response
-	 * @param tokenResponse
+	 * @param accessToken
 	 *            response to the token request
-	 * @param idTokenClaims
+	 * @param idToken
 	 *            claims from the id token
-	 * @param userInfoResponse
+	 * @param userInfo
 	 *            response to the user info request
 	 * @return response containing HTML formatted summary.
 	 */
-	public static String successPage(AuthorizationCode authCode,
-			AccessToken accessToken, String idToken,
-			ReadOnlyJWTClaimsSet idTokenClaims,
-			UserInfoSuccessResponse userInfoResponse) throws IOException {
+	public static String successPage(
+			AuthorizationCode authCode,
+			AccessToken accessToken,
+			JWT idToken,
+			UserInfo userInfo
+	) throws IOException, java.text.ParseException {
 
 		StringBuilder idTokenString = new StringBuilder();
-		idTokenString.append(idTokenClaims.toJSONObject().toJSONString());
-		idTokenString.append("\n");
-		idTokenString.append(idToken);
+		idTokenString.append(idToken.getJWTClaimsSet().toJSONObject().toJSONString());
+		idTokenString.append("\n\n");
+		idTokenString.append(idToken.getParsedString());
 
-		StringBuilder userInfoString = new StringBuilder();
-		if (userInfoResponse != null) {
-			userInfoString.append(userInfoResponse.getUserInfo().toJSONObject()
-					.toJSONString());
-			if (userInfoResponse.getContentType().equals(
-					CommonContentTypes.APPLICATION_JWT)) {
-				userInfoString.append("\n");
-				userInfoString.append(userInfoResponse.getUserInfoJWT()
-						.getParsedString());
-			}
-		} else {
-			userInfoString.append("null");
-		}
-		String successPage = FileHandling.readFromFile("success_page.html");
+		String userInfoString = userInfo.toJSONObject().toJSONString();
+
+		String successPage = readFromFile("success_page.html");
 		return MessageFormat.format(successPage, authCode, accessToken,
 				idTokenString, userInfoString);
+	}
+
+	/**
+	 * Read all data from a file.
+	 *
+	 * @param path path of the file
+	 * @return All data from the file.
+	 * @throws IOException
+	 */
+	public static String readFromFile(String path) throws IOException {
+		return new String(Files.readAllBytes(Paths.get(".").resolve(Paths
+				.get(path))), StandardCharsets.UTF_8);
 	}
 }

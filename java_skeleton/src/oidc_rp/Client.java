@@ -135,9 +135,9 @@ public class Client {
 			// TODO make token request
 
 			TokenRequest tokenReq = new TokenRequest(
-					null, /* Token endpoint URI, where ELIXIR AAI authenticates your client */
-					new ClientSecretBasic(null, null), /* Client ID, Client Secret */
-					new AuthorizationCodeGrant(null, null) /* Authorization code, your client redirect URI */
+					providerMetadata.getTokenEndpointURI(), /* Token endpoint URI, where ELIXIR AAI authenticates your client */
+					new ClientSecretBasic(clientID, clientSecret), /* Client ID, Client Secret */
+					new AuthorizationCodeGrant(authCode, clientRedirectionURI) /* Authorization code, your client redirect URI */
 			);
 
 			OIDCTokenResponse tokenRes = OIDCTokenResponse.parse(tokenReq.toHTTPRequest().send());
@@ -151,7 +151,7 @@ public class Client {
 			Check the method itself
 			Obtain Nonce from session
 			*/
-			validateIDToken(null, null, null, null);
+			validateIDToken(idToken, providerMetadata, clientID, req.session().attribute("nonce"));
 
 			BearerAccessToken accessToken = (BearerAccessToken) tokenRes.getOIDCTokens().getAccessToken();
 
